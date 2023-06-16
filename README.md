@@ -14,3 +14,4 @@ The director of marketing has set a clear goal for the marketing team: to design
 
 ## 📁 Files
 * **consumer_behavior_analysis.Rmd**: R Markdown file containing the analysis for the customer behavior project.
+* **consumer_behavior_analysis.html**: the html knitted version of my R Markdown file. 
