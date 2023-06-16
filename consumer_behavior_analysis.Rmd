@@ -1,0 +1,461 @@
+---
+title: "Consumer Behavior Analysis"
+author: "Elizabeth Kinuthia"
+date: "2023-05-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Consumer Behavior Analysis
+
+In this project, I analyzed Cyclistic's company data in order to answer stakeholder questions. I performed EDA, statistical analysis, and created visualizations to drive decision making.
+
+## Setting Up My Environment
+
+I began setting up my enviroment by loading the necessary packages that I will use during my analysis.
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(skimr)
+library(janitor)
+```
+
+## Preparing My Data and Environment for Analysis
+
+I then collected my data, and loaded all the data into a dataframe. After that, I cleared up space in my environment to ensure my environment is as efficient as possible. 
+
+```{r}
+#collect the Data
+trips_05_2022 <- read_csv('202205-divvy-tripdata.csv')  
+trips_06_2022 <- read_csv('202206-divvy-tripdata.csv')
+trips_07_2022 <- read_csv('202207-divvy-tripdata.csv')
+trips_08_2022 <- read_csv('202208-divvy-tripdata.csv')
+trips_09_2022 <- read_csv('202209-divvy-publictripdata.csv')
+trips_10_2022 <- read_csv('202210-divvy-tripdata.csv')
+trips_11_2022 <- read_csv('202211-divvy-tripdata.csv')
+trips_12_2022 <- read_csv('202212-divvy-tripdata.csv')
+trips_01_2023 <- read_csv('202301-divvy-tripdata.csv')
+trips_02_2023 <- read_csv('202302-divvy-tripdata.csv')
+trips_03_2023 <- read_csv('202303-divvy-tripdata.csv')
+trips_04_2023 <- read_csv('202304-divvy-tripdata.csv')
+
+#combine all the data into one dataframe
+alltrips <- bind_rows(trips_05_2022, trips_06_2022,trips_07_2022, 
+                      trips_08_2022, trips_09_2022, trips_10_2022, 
+                      trips_11_2022, trips_12_2022, trips_01_2023, 
+                      trips_02_2023, trips_03_2023, trips_04_2023)
+
+#clear up space in the environment
+remove(trips_05_2022, trips_06_2022,trips_07_2022, 
+       trips_08_2022, trips_09_2022, trips_10_2022, 
+       trips_11_2022, trips_12_2022, trips_01_2023, 
+       trips_02_2023, trips_03_2023, trips_04_2023)
+
+#create new dataframe to add new columns
+cyclistic_df <- alltrips 
+```
+
+## Data Wrangling
+
+In this section, I performed data wrangling by transforming my data, cleaning it, and validating the data using the `skim_without_charts()` function. 
+
+### Transforming the Data
+
+The first thing that we need to do is determine the ride length. I created a column for `ride_length` 
+
+```{r}
+cyclistic_df$ride_length <- difftime(cyclistic_df$ended_at, cyclistic_df$started_at)
+```
+
+Another problem with our data is that it is too granular. The data can only be aggregated at a ride level, so it's necessary to add more columns that provide additional opportunities to aggregate the data. I created columns for date, day of week, month, year, time, and hour. 
+
+```{r}
+cyclistic_df$date <- as.Date(cyclistic_df$started_at)
+cyclistic_df$day_of_week <- format(as.Date(cyclistic_df$started_at), '%A')
+cyclistic_df$day <- format(as.Date(cyclistic_df$started_at), '%d')
+cyclistic_df$month <- format(as.Date(cyclistic_df$started_at), '%m')
+cyclistic_df$year <- format(as.Date(cyclistic_df$started_at), '%Y')
+cyclistic_df$time <- format(as.Date(cyclistic_df$started_at), '%H:%M:%S')
+cyclistic_df$hour <- hour(cyclistic_df$started_at)
+```
+
+I also created a column to indicate the season, i.e. Spring, Summer, Autumn, and Winter. 
+
+```{r}
+cyclistic_df <- cyclistic_df %>% mutate(season=
+                                          case_when(month == '03'~'Spring',
+                                                    month == '04'~'Spring',
+                                                    month == '05'~'Spring',
+                                                    month == '06'~'Summer',
+                                                    month == '07'~'Summer',
+                                                    month == '08'~'Summer',
+                                                    month == '09'~'Autumn',
+                                                    month == '10'~'Autumn',
+                                                    month == '11'~'Autumn',
+                                                    month == '12'~'Winter',
+                                                    month == '01'~'Winter',
+                                                    month == '02'~'Winter'))
+```
+
+I also created a column to indicate the time of day. 
+
+```{r}
+cyclistic_df <- cyclistic_df %>% mutate(time_of_day=
+                                          case_when(hour == '0'~'Night',
+                                                    hour == '1'~'Night',
+                                                    hour == '2'~'Night',
+                                                    hour == '3'~'Night',
+                                                    hour == '4'~'Night',
+                                                    hour == '5'~'Night',
+                                                    hour == '6'~'Morning',
+                                                    hour == '7'~'Morning',
+                                                    hour == '8'~'Morning',
+                                                    hour == '9'~'Morning',
+                                                    hour == '10'~'Morning',
+                                                    hour == '11'~'Morning',
+                                                    hour == '12'~'Afternoon',
+                                                    hour == '13'~'Afternoon',
+                                                    hour == '14'~'Afternoon',
+                                                    hour == '15'~'Afternoon',
+                                                    hour == '16'~'Afternoon',
+                                                    hour == '17'~'Evening',
+                                                    hour == '18'~'Evening',
+                                                    hour == '19'~'Evening',
+                                                    hour == '20'~'Evening',
+                                                    hour == '21'~'Evening',
+                                                    hour == '22'~'Night',
+                                                    hour == '23'~'Night'))
+```
+
+### Data Cleaning
+
+I first used `skim_without_charts()` to check which columns had null values in them. 
+
+```{r}
+skim_without_charts(cyclistic_df)
+```
+
+I then I cleaned the data by removing unnecessary columns, null values and duplicate rows. 
+
+```{r}
+cyclistic_df <- cyclistic_df %>% 
+  select(-c(ride_id, start_station_id, end_station_id, start_lat, start_lng, end_lat, end_lng)) 
+
+cyclistic_df <- cyclistic_df %>% 
+  filter(!(is.na(started_at))) 
+
+cyclistic_df <- distinct(cyclistic_df)
+```
+
+Then, I filtered out all trips with a negative value for trip duration, and the trips from start station 'HQ QR'. This is because these bikes were taken out of circulation by Cyclistic for quality control reasons.
+
+```{r}
+cyclistic_df <- cyclistic_df %>% 
+  filter(!(start_station_name == 'HQ QR' | ride_length <0))
+```
+
+I then set the order for these columns: 
+
+  1) `day_of_week` column
+  2) `time_of_day` column
+  3) `season` column
+
+```{r}
+#set order for day_of_week column
+cyclistic_df$day_of_week <- cyclistic_df$day_of_week %>% 
+  ordered(levels = c('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'))
+
+#set order for time_of_day column
+cyclistic_df$time_of_day <- cyclistic_df$time_of_day %>% 
+  ordered(levels = c('Morning','Afternoon','Evening','Night'))
+
+#set order for season column
+cyclistic_df$season <- cyclistic_df$season %>% 
+  ordered(levels = c('Winter','Spring','Summer','Autumn'))
+```
+
+Finally, I viewed my data to check the quality of the data after performing data wrangling. 
+
+```{r}
+skim_without_charts(cyclistic_df)
+```
+
+## Exploratory and Statistical Data Analysis
+
+In this phase, I performed Exploratory Data Analysis and Statistical Analysis, and used visualizations to analyze my data. 
+
+### Analyzing Total Rides
+I found the total number of rides and visualized it according to user type using the `ggplot2` library. 
+```{r}
+nrow(cyclistic_df)
+```
+
+```{r}
+cyclistic_df %>% 
+  group_by(member_casual) %>% 
+  count(member_casual)
+```
+
+```{r}
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=member_casual))
+```
+
+I analyzed the total rides per member type and per bike type.
+
+```{r}
+cyclistic_df %>% 
+  group_by(member_casual) %>% 
+  count(rideable_type)
+
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=member_casual, fill=rideable_type))
+  
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=member_casual)) + facet_wrap(~rideable_type)
+```
+
+I analyzed the total rides per day of the week
+
+```{r}
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=day_of_week)) + facet_wrap(~member_casual)
+
+cyclistic_df %>% 
+  group_by(day_of_week, member_casual) %>% 
+  count()
+```
+
+I analyzed the total rides per month
+
+```{r}
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=month)) + facet_wrap(~member_casual)
+
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=month))
+
+cyclistic_df %>% 
+  group_by(month) %>% 
+  count()
+```
+
+I analyzed the total rides per year
+
+```{r}
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=year)) + facet_wrap(~member_casual)
+
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=year))
+
+cyclistic_df %>% 
+  group_by(year) %>% 
+  count(member_casual)
+```
+
+I analyzed the total rides per season
+
+```{r}
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=season, fill = member_casual))
+
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=season))
+
+cyclistic_df %>% 
+  group_by(season) %>% 
+  count(member_casual)
+```
+
+I analyzed the total rides for each time of day
+
+```{r}
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=time_of_day, fill = member_casual))
+
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=time_of_day))
+
+cyclistic_df %>% 
+  group_by(time_of_day) %>% 
+  count(member_casual)
+```
+
+I analyzed the total rides per hour
+
+```{r}
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=hour, fill = member_casual))
+
+cyclistic_df %>% 
+  ggplot() + geom_bar(aes(x=hour))
+
+cyclistic_df %>% 
+  group_by(hour) %>% 
+  count() %>% 
+  max()
+```
+
+### Analyzing Trip Length
+
+First, I created a column to be able to analyze the trip length in minutes. 
+
+```{r}
+cyclistic_df$ride_length_min <- difftime(cyclistic_df$ended_at, cyclistic_df$started_at, units = "mins")
+```
+
+Then I calculated the mean, and viewed the distribution of the trip length. 
+
+```{r}
+mean(as.numeric(cyclistic_df$ride_length_min)) #average trip length in minutes
+summary(as.numeric(cyclistic_df$ride_length_min)) #distribution of trip length
+```
+
+I analyzed the average trip length per user type.
+
+```{r}
+cyclistic_df %>% 
+  ggplot(aes(x=member_casual, y=as.numeric(ride_length_min))) + geom_bar(stat = "summary",fun="mean")
+
+cyclistic_df %>% 
+  group_by(member_casual) %>% 
+  summarise(mean_ride_length = mean(ride_length_min)) %>% 
+  as.data.frame()
+```
+
+I analyzed the average trip length per bike type.
+
+```{r}
+cyclistic_df %>% 
+  ggplot(aes(x=rideable_type, y=as.numeric(ride_length_min))) + 
+  geom_bar(stat = "summary",fun="mean") +
+  facet_wrap(~member_casual)
+
+cyclistic_df %>% 
+  group_by(rideable_type, member_casual) %>% 
+  summarise(mean_ride_length = mean(ride_length_min)) %>% 
+  as.data.frame()
+```
+
+I analyzed the average trip length per month.
+
+```{r}
+cyclistic_df %>% 
+  ggplot(aes(x=month, y=as.numeric(ride_length_min))) + geom_bar(stat = "summary",fun="mean")
+
+cyclistic_df %>% 
+  group_by(month) %>% 
+  summarise(mean_ride_length = mean(ride_length_min)) %>% 
+  as.data.frame()
+```
+
+I analyzed the average trip length per year. 
+
+```{r}
+cyclistic_df %>% 
+  ggplot(aes(x=year, y=as.numeric(ride_length_min))) + geom_bar(stat = "summary",fun="mean")
+
+cyclistic_df %>% 
+  group_by(year) %>% 
+  summarise(mean_ride_length = mean(ride_length_min)) %>% 
+  as.data.frame()
+```
+
+I analyzed the average trip length per season.
+
+```{r}
+cyclistic_df %>% 
+  ggplot(aes(x=season, y=as.numeric(ride_length_min))) + geom_bar(stat = "summary",fun="mean")
+
+cyclistic_df %>% 
+  group_by(season) %>% 
+  summarise(mean_ride_length = mean(ride_length_min)) %>% 
+  as.data.frame()
+```
+
+I analyzed the average trip length for each time of day.
+
+```{r}
+cyclistic_df %>% 
+  ggplot(aes(x=time_of_day, y=as.numeric(ride_length_min),fill=member_casual)) + 
+  geom_bar(stat = "summary",fun="mean")
+
+cyclistic_df %>% 
+  group_by(time_of_day,member_casual) %>% 
+  summarise(mean_ride_length = mean(ride_length_min)) %>% 
+  as.data.frame()
+```
+
+I analyzed the average trip length per hour.
+
+```{r}
+cyclistic_df %>% 
+  ggplot(aes(x=hour, y=as.numeric(ride_length_min))) + 
+  geom_bar(stat = "summary",fun="mean") +
+  facet_wrap(~member_casual)
+
+cyclistic_df %>% 
+  group_by(hour,member_casual) %>% 
+  summarise(mean_ride_length = mean(ride_length_min)) %>% 
+  as.data.frame()
+
+cyclistic_df %>% 
+  group_by(hour) %>% 
+  summarise(mean_ride_length = mean(as.numeric(ride_length_min))) %>% 
+  as.data.frame() %>% max()
+```
+
+After I had performed my analysis I was able to gain the following insights:
+
+  1) Even though annual members took the most bike rides, casual riders rode their bikes for longer periods of time each ride. 
+    
+    - Casual riders took their longest bike rides at night. 
+
+  2) The classic bike was the most popular bike among annual members, while the electric bike was most popular among casual riders.
+    
+    - Casual riders rode the longest on the docked bikes, even though docked bikes had the least amount of rides total. 
+
+  3) Casual riders prefer to ride their bikes on weekends, where as annual members ride their bikes most during weekdays. 
+
+  4) Summer was the most popular season for bike riding for both annual and casual riders.
+
+## Data Visualization Preparation
+ 
+Now that the analysis was complete, I prepared the data for visualization in Tableau. 
+
+```{r}
+cyclistic_viz <- cyclistic_df
+cyclistic_viz <- cyclistic_viz %>% mutate(month = 
+                                                case_when(month == '01'~'January',
+                                                          month == '02'~'February',
+                                                          month == '03'~'March',
+                                                          month == '04'~'April',
+                                                          month == '05'~'May',
+                                                          month == '06'~'June',
+                                                          month == '07'~'July',
+                                                          month == '08'~'August',
+                                                          month == '09'~'September',
+                                                          month == '10'~'October',
+                                                          month == '11'~'November',
+                                                          month == '12'~'December')) 
+```
+
+I made sure to set the order for the month column. 
+
+```{r}
+cyclistic_viz$month <- cyclistic_viz$month %>% 
+  ordered(levels = c('January','February','March','April','May','June','July',
+                     'August','September','October','November','December'))
+```
+
+I then exported my data to a csv file. With that, my analysis using R programming was complete. 
+
+```{r}
+library(data.table)
+fwrite(cyclistic_viz,'cyclistic_tableau_data.csv')
+```
