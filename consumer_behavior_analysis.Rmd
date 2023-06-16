@@ -414,11 +414,11 @@ After I had performed my analysis I was able to gain the following insights:
 
   1) Even though annual members took the most bike rides, casual riders rode their bikes for longer periods of time each ride. 
     
-    - Casual riders took their longest bike rides at night. 
+    * Casual riders took their longest bike rides at night. 
 
   2) The classic bike was the most popular bike among annual members, while the electric bike was most popular among casual riders.
     
-    - Casual riders rode the longest on the docked bikes, even though docked bikes had the least amount of rides total. 
+    * Casual riders rode the longest on the docked bikes, even though docked bikes had the least amount of rides total. 
 
   3) Casual riders prefer to ride their bikes on weekends, where as annual members ride their bikes most during weekdays. 
 
