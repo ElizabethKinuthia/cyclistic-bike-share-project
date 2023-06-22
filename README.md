@@ -13,5 +13,5 @@ The director of marketing has set a clear goal for the marketing team: to design
 * **[Tableau Visualization](https://public.tableau.com/views/CustomerBehaviorAnalysis_16867587346190/CyclisticBikeshareAnalysis?%3Alanguage=en-US&%3Adisplay_count=n&%3Aorigin=viz_share_link)**: a compelling visualization showcasing my key insights. 
 
 ## 📁 Files
-* **consumer_behavior_analysis.Rmd**: R Markdown file containing the analysis for the customer behavior project.
-* **consumer_behavior_analysis.html**: the html knitted version of my R Markdown file. 
+* **[consumer_behavior_analysis.Rmd](https://github.com/ElizabethKinuthia/cyclistic-bike-share-project/blob/1a3349ee0d3b28fc13e7863ec4131348aa5c7490/consumer_behavior_analysis.Rmd)**: R Markdown file containing the analysis for the customer behavior project.
+* **[consumer_behavior_analysis.html](https://github.com/ElizabethKinuthia/cyclistic-bike-share-project/blob/1a3349ee0d3b28fc13e7863ec4131348aa5c7490/consumer_behavior_analysis.html)**: the html knitted version of my R Markdown file. 
